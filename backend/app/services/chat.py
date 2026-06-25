@@ -1,16 +1,19 @@
+import logging
 from pathlib import Path
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 async def generate_response(user_message: str, file_context: str = "") -> str:
     context = f"\n\nAttached file context:\n{file_context}" if file_context else ""
 
     if settings.openai_api_key:
-        try:
-            from openai import AsyncOpenAI
+        from openai import AsyncOpenAI
 
-            client = AsyncOpenAI(api_key=settings.openai_api_key)
+        client = AsyncOpenAI(api_key=settings.openai_api_key)
+        try:
             response = await client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
@@ -22,8 +25,9 @@ async def generate_response(user_message: str, file_context: str = "") -> str:
                 ],
             )
             return response.choices[0].message.content or "I couldn't generate a response."
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.exception("OpenAI API call failed")
+            return f"Sorry, I couldn't reach the AI service: {exc}"
 
     preview = file_context[:200] + "..." if len(file_context) > 200 else file_context
     file_note = f"\n\nI received your file with content preview:\n{preview}" if preview else ""

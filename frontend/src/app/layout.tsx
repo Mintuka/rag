@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ChatGPT",
+  title: "Sathi AI",
   description: "AI chat assistant with file upload",
 };
 

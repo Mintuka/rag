@@ -151,7 +151,7 @@ export function ChatApp() {
       <main className="flex flex-1 flex-col overflow-hidden">
         <header className="flex items-center justify-between border-b border-[var(--border-color)] px-4 py-3">
           <button className="flex items-center gap-1 text-lg font-medium text-[var(--text-primary)]">
-            ChatGPT
+            Sathi AI
             <ChevronDown size={16} className="text-[var(--text-secondary)]" />
           </button>
           {!isAuthenticated && (

@@ -1,0 +1,74 @@
+# Production: frontend + backend behind Caddy (HTTPS).
+# Usage: docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+
+services:
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: rag-backend
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - upload_data:/app/uploads
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - rag-network
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    container_name: rag-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - rag-network
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: rag-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      API_DOMAIN: ${API_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - rag-network
+
+volumes:
+  upload_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  rag-network:
+    driver: bridge
