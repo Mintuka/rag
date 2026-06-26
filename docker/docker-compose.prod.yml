@@ -6,7 +6,7 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
-    container_name: rag-backend
+    container_name: sathi-ai-backend
     restart: unless-stopped
     env_file:
       - .env.production
@@ -26,9 +26,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 15s
+      start_period: 60s
     networks:
-      - rag-network
+      - sathi-ai-network
 
   frontend:
     build:
@@ -36,17 +36,17 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-    container_name: rag-frontend
+    container_name: sathi-ai-frontend
     restart: unless-stopped
     depends_on:
       backend:
         condition: service_healthy
     networks:
-      - rag-network
+      - sathi-ai-network
 
   caddy:
     image: caddy:2-alpine
-    container_name: rag-caddy
+    container_name: sathi-ai-caddy
     restart: unless-stopped
     ports:
       - "80:80"
@@ -62,7 +62,7 @@ services:
       - frontend
       - backend
     networks:
-      - rag-network
+      - sathi-ai-network
 
 volumes:
   upload_data:
@@ -70,5 +70,5 @@ volumes:
   caddy_config:
 
 networks:
-  rag-network:
+  sathi-ai-network:
     driver: bridge

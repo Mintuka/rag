@@ -3,7 +3,7 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
-    container_name: rag-backend
+    container_name: sathi-ai-backend
     restart: unless-stopped
     ports:
       - "${BACKEND_PORT:-8000}:8000"
@@ -25,9 +25,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 15s
+      start_period: 60s
     networks:
-      - rag-network
+      - sathi-ai-network
 
   frontend:
     build:
@@ -36,7 +36,7 @@ services:
       args:
         # Browser calls the host-mapped backend port (not the internal service name)
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
-    container_name: rag-frontend
+    container_name: sathi-ai-frontend
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
@@ -44,11 +44,11 @@ services:
       backend:
         condition: service_healthy
     networks:
-      - rag-network
+      - sathi-ai-network
 
 volumes:
   upload_data:
 
 networks:
-  rag-network:
+  sathi-ai-network:
     driver: bridge

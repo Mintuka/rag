@@ -16,7 +16,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="RAG Chat API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Sathi AI API", version="1.0.0", lifespan=lifespan)
 
 origins = [o.strip() for o in settings.cors_origins.split(",")]
 app.add_middleware(

@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from app.config import settings
 from app.database import get_db
 from app.models import UploadedFile, User
 from app.schemas import FileResponse
+from app.services.rag_pipeline import ingest_and_save, is_rag_supported
 
 router = APIRouter(prefix="/api/files", tags=["files"])
 
@@ -47,6 +49,9 @@ async def upload_file(
     db.add(uploaded)
     await db.commit()
     await db.refresh(uploaded)
+
+    if settings.openai_api_key and is_rag_supported(file.filename):
+        await asyncio.to_thread(ingest_and_save, file_path, uploaded.id)
 
     return FileResponse.model_validate(uploaded)
 

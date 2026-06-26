@@ -1,4 +1,4 @@
-# RAG Chat Application
+# Sathi AI
 
 A full-stack ChatGPT-like chat application with authentication, file upload, and AI-powered responses.
 
@@ -134,8 +134,8 @@ Internet
 On the server:
 
 ```bash
-git clone <your-repo-url> rag
-cd rag/docker
+git clone <your-repo-url> sathi-ai
+cd sathi-ai/docker
 cp .env.production.example .env.production
 nano .env.production   # set domains, DATABASE_URL, JWT_SECRET, etc.
 ```

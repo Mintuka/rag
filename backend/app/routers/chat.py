@@ -17,7 +17,7 @@ from app.schemas import (
     MessageCreate,
     MessageResponse,
 )
-from app.services.chat import generate_response, read_text_file
+from app.services.chat import generate_response_with_files
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -110,7 +110,7 @@ async def send_message(
         db.add(conversation)
         await db.flush()
 
-    file_context = ""
+    attached_files: list[tuple[uuid.UUID, Path, str]] = []
     if payload.file_ids:
         files_result = await db.execute(
             select(UploadedFile).where(
@@ -122,14 +122,13 @@ async def send_message(
         for f in files:
             f.conversation_id = conversation.id
             file_path = Path(settings.upload_dir) / f.filename
-            if file_path.exists():
-                file_context += f"\n--- {f.original_name} ---\n{read_text_file(file_path)}"
+            attached_files.append((f.id, file_path, f.original_name))
 
     user_msg = Message(conversation_id=conversation.id, role="user", content=payload.content)
     db.add(user_msg)
     await db.flush()
 
-    assistant_content = await generate_response(payload.content, file_context)
+    assistant_content = await generate_response_with_files(payload.content, attached_files)
     assistant_msg = Message(conversation_id=conversation.id, role="assistant", content=assistant_content)
     db.add(assistant_msg)
 

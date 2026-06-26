@@ -1,7 +1,15 @@
+import asyncio
 import logging
+import uuid
 from pathlib import Path
 
 from app.config import settings
+from app.services.rag_pipeline import (
+    is_rag_supported,
+    load_or_ingest_index,
+    merge_indices,
+    rag_query,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,3 +50,33 @@ def read_text_file(file_path: Path) -> str:
         return file_path.read_text(encoding="utf-8", errors="ignore")[:4000]
     except Exception:
         return "[Binary or unreadable file]"
+
+
+async def generate_response_with_files(
+    user_message: str,
+    files: list[tuple[uuid.UUID, Path, str]],
+) -> str:
+    """
+    Answer using RAG when indexed files are attached; fall back to prompt stuffing.
+    files: list of (file_id, disk_path, original_name)
+    """
+    if settings.openai_api_key and files:
+        indices = []
+        for file_id, file_path, original_name in files:
+            if not file_path.exists():
+                continue
+            if is_rag_supported(original_name):
+                index = await asyncio.to_thread(load_or_ingest_index, file_path, file_id)
+                if index and index.chunks:
+                    indices.append(index)
+
+        if indices:
+            merged = merge_indices(indices)
+            return await asyncio.to_thread(rag_query, merged, user_message)
+
+    file_context = ""
+    for _, file_path, original_name in files:
+        if file_path.exists():
+            file_context += f"\n--- {original_name} ---\n{read_text_file(file_path)}"
+
+    return await generate_response(user_message, file_context)
